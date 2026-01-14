@@ -1,0 +1,980 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UTSTinder - Find Your Mate in UTS</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+    
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+    
+    * {
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .app-wrapper {
+      width: 100%;
+      min-height: 100%;
+      overflow-y: auto;
+    }
+    
+    .gradient-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    }
+    
+    .gradient-card {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(240, 147, 251, 0.1) 100%);
+    }
+    
+    .card-3d {
+      transform-style: preserve-3d;
+      transition: transform 0.6s;
+    }
+    
+    .card-3d:hover {
+      transform: rotateY(5deg) rotateX(5deg);
+    }
+    
+    .pulse-heart {
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+    
+    .float {
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-15px); }
+    }
+    
+    .slide-in {
+      animation: slideIn 0.5s ease-out;
+    }
+    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.4s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .profile-card {
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .profile-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    
+    .compatibility-bar {
+      height: 12px;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+      transition: width 0.8s ease;
+    }
+    
+    .tag {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .tag:hover {
+      transform: scale(1.05);
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    .spinner {
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    input, select, textarea {
+      transition: all 0.3s ease;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+    }
+    
+    button {
+      transition: all 0.3s ease;
+    }
+    
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 16px 24px;
+      border-radius: 12px;
+      color: white;
+      font-weight: 600;
+      z-index: 10000;
+      animation: slideInRight 0.4s ease;
+    }
+    
+    @keyframes slideInRight {
+      from { transform: translateX(400px); }
+      to { transform: translateX(0); }
+    }
+    
+    .match-animation {
+      animation: matchPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    
+    @keyframes matchPop {
+      0% { transform: scale(0.8); opacity: 0; }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+ </head>
+ <body>
+  <div class="app-wrapper" id="app"><!-- Landing Page -->
+   <div id="page-landing" class="fade-in"><!-- Navigation -->
+    <nav class="w-full px-6 py-5 bg-white bg-opacity-95 backdrop-blur-lg fixed top-0 z-50 shadow-sm">
+     <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <div class="flex items-center gap-2"><span class="text-3xl pulse-heart">💕</span> <span id="nav-title" class="font-bold text-2xl bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">UTSTinder! &lt;3</span>
+      </div>
+      <div class="flex gap-4 items-center"><button onclick="showPage('login')" id="nav-login" class="px-6 py-2 font-semibold rounded-full hover:bg-gray-100 transition-all">Login</button> <button onclick="showPage('signup')" id="nav-signup" class="px-6 py-2 font-semibold rounded-full text-white shadow-lg">Create Profile</button>
+      </div>
+     </div>
+    </nav><!-- Hero Section -->
+    <section class="w-full pt-32 pb-20 px-6 gradient-primary">
+     <div class="max-w-7xl mx-auto text-center">
+      <div class="float inline-block mb-6"><span class="text-8xl">❤️</span>
+      </div>
+      <h1 id="hero-title" class="text-7xl font-black mb-4 text-white drop-shadow-lg">UTSTinder! <span class="pulse-heart">💖</span></h1>
+      <p id="hero-tagline" class="text-4xl font-bold mb-4 text-white opacity-95">Find Your Mate in UTS</p>
+      <p id="hero-subtitle" class="text-2xl mb-10 max-w-3xl mx-auto text-white opacity-90">More than a swipe. Match minds, match hearts, and build meaningful connections on campus.</p><button onclick="showPage('signup')" id="hero-cta" class="px-12 py-5 text-2xl font-bold rounded-full text-white shadow-2xl hover:scale-110 transition-all">Start Matching ✨</button>
+     </div>
+    </section><!-- How It Works -->
+    <section class="w-full py-20 px-6 bg-white">
+     <div class="max-w-7xl mx-auto">
+      <h2 class="text-5xl font-black text-center mb-16 text-gray-800">How It Works 🎯</h2>
+      <div class="grid md:grid-cols-3 gap-10">
+       <div class="text-center p-8 gradient-card rounded-3xl slide-in">
+        <div class="text-7xl mb-6">
+         📝
+        </div>
+        <h3 class="text-2xl font-bold mb-4 text-gray-800">1. Create Profile</h3>
+        <p class="text-lg text-gray-600">Share your personality, interests, values, and what makes you unique.</p>
+       </div>
+       <div class="text-center p-8 gradient-card rounded-3xl slide-in" style="animation-delay: 0.1s;">
+        <div class="text-7xl mb-6">
+         🤖
+        </div>
+        <h3 class="text-2xl font-bold mb-4 text-gray-800">2. Smart Matching</h3>
+        <p class="text-lg text-gray-600">AI finds compatible matches based on deep compatibility factors.</p>
+       </div>
+       <div class="text-center p-8 gradient-card rounded-3xl slide-in" style="animation-delay: 0.2s;">
+        <div class="text-7xl mb-6">
+         💬
+        </div>
+        <h3 class="text-2xl font-bold mb-4 text-gray-800">3. Connect</h3>
+        <p class="text-lg text-gray-600">Break ice with curated questions and build genuine connections.</p>
+       </div>
+      </div>
+     </div>
+    </section><!-- Features -->
+    <section class="w-full py-20 px-6 bg-gray-50">
+     <div class="max-w-7xl mx-auto">
+      <h2 class="text-5xl font-black text-center mb-16 text-gray-800">Why Students Love Us 💝</h2>
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+       <div class="p-6 bg-white rounded-2xl shadow-lg text-center hover:shadow-xl transition-all">
+        <div class="text-5xl mb-4">
+         🧠
+        </div>
+        <h3 class="text-xl font-bold mb-2 text-gray-800">Deep Matching</h3>
+        <p class="text-gray-600">AI analyzes 50+ compatibility factors</p>
+       </div>
+       <div class="p-6 bg-white rounded-2xl shadow-lg text-center hover:shadow-xl transition-all">
+        <div class="text-5xl mb-4">
+         🛡️
+        </div>
+        <h3 class="text-xl font-bold mb-2 text-gray-800">Campus Safe</h3>
+        <p class="text-gray-600">Verified UTS students only</p>
+       </div>
+       <div class="p-6 bg-white rounded-2xl shadow-lg text-center hover:shadow-xl transition-all">
+        <div class="text-5xl mb-4">
+         💖
+        </div>
+        <h3 class="text-xl font-bold mb-2 text-gray-800">Real Connections</h3>
+        <p class="text-gray-600">Beyond superficial swiping</p>
+       </div>
+       <div class="p-6 bg-white rounded-2xl shadow-lg text-center hover:shadow-xl transition-all">
+        <div class="text-5xl mb-4">
+         🎓
+        </div>
+        <h3 class="text-xl font-bold mb-2 text-gray-800">Study Dates</h3>
+        <p class="text-gray-600">From study buddy to lover</p>
+       </div>
+      </div>
+     </div>
+    </section><!-- CTA -->
+    <section class="w-full py-24 px-6 gradient-primary">
+     <div class="max-w-4xl mx-auto text-center">
+      <h2 class="text-6xl font-black mb-6 text-white">Ready to Find Your Match? 💕</h2>
+      <p class="text-2xl mb-10 text-white opacity-90">Join UTS students finding meaningful connections.</p><button onclick="showPage('signup')" class="px-12 py-6 text-2xl font-bold rounded-full bg-white text-purple-600 shadow-2xl hover:scale-110 transition-all">Get Started Free</button>
+     </div>
+    </section>
+   </div><!-- Sign Up Page -->
+   <div id="page-signup" class="hidden">
+    <div class="w-full min-h-full bg-gradient-to-br from-purple-50 to-pink-50 py-12 px-6">
+     <div class="max-w-2xl mx-auto">
+      <div class="text-center mb-8"><button onclick="showPage('landing')" class="text-gray-600 hover:text-gray-800 mb-4">← Back to Home</button>
+       <h1 class="text-5xl font-black mb-3 text-gray-800">Create Your Profile 💖</h1>
+       <p class="text-xl text-gray-600">Let's find your perfect match at UTS!</p>
+      </div>
+      <form id="signup-form" class="bg-white rounded-3xl shadow-2xl p-8 space-y-6"><!-- Basic Info -->
+       <div><label for="signup-name" class="block text-sm font-bold mb-2 text-gray-700">Name / Nickname *</label> <input type="text" id="signup-name" required class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400" placeholder="What should we call you?">
+       </div>
+       <div class="grid md:grid-cols-2 gap-4">
+        <div><label for="signup-age" class="block text-sm font-bold mb-2 text-gray-700">Age *</label> <input type="number" id="signup-age" required min="18" max="100" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400" placeholder="18+">
+        </div>
+        <div><label for="signup-year" class="block text-sm font-bold mb-2 text-gray-700">Year of Study *</label> <select id="signup-year" required class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400"> <option value="">Select year...</option> <option value="1">Year 1</option> <option value="2">Year 2</option> <option value="3">Year 3</option> <option value="4">Year 4+</option> </select>
+        </div>
+       </div>
+       <div><label for="signup-course" class="block text-sm font-bold mb-2 text-gray-700">Course of Study *</label> <input type="text" id="signup-course" required class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400" placeholder="e.g. Computer Science, Engineering...">
+       </div>
+       <div><label for="signup-bio" class="block text-sm font-bold mb-2 text-gray-700">About Me *</label> <textarea id="signup-bio" required rows="3" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400" placeholder="Tell us about yourself in a few sentences..."></textarea>
+       </div><!-- Personality -->
+       <div><label for="signup-personality" class="block text-sm font-bold mb-2 text-gray-700">Personality Type *</label> <select id="signup-personality" required class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400"> <option value="">Select personality...</option> <option value="Introvert">🤫 Introvert - I recharge alone</option> <option value="Extrovert">🎉 Extrovert - I thrive with people</option> <option value="Ambivert">⚖️ Ambivert - Best of both worlds</option> </select>
+       </div>
+       <div><label for="signup-love-language" class="block text-sm font-bold mb-2 text-gray-700">Love Language *</label> <select id="signup-love-language" required class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400"> <option value="">Select love language...</option> <option value="Words of Affirmation">💬 Words of Affirmation</option> <option value="Quality Time">⏰ Quality Time</option> <option value="Physical Touch">🤗 Physical Touch</option> <option value="Acts of Service">🛠️ Acts of Service</option> <option value="Receiving Gifts">🎁 Receiving Gifts</option> </select>
+       </div>
+       <div><label for="signup-interests" class="block text-sm font-bold mb-2 text-gray-700">Interests &amp; Hobbies *</label> <input type="text" id="signup-interests" required class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400" placeholder="e.g. Coffee, Reading, Gym, Travel...">
+       </div>
+       <div><label for="signup-goal" class="block text-sm font-bold mb-2 text-gray-700">Relationship Goal *</label> <select id="signup-goal" required class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400"> <option value="">What are you looking for?</option> <option value="Friendship">🤝 New Friends</option> <option value="Dating">💑 Casual Dating</option> <option value="Serious">💍 Long-term Relationship</option> <option value="Open">🌈 Open to Anything</option> </select>
+       </div><!-- Fun Prompts -->
+       <div><label for="signup-perfect-date" class="block text-sm font-bold mb-2 text-gray-700">Perfect First Date Idea 💭</label> <input type="text" id="signup-perfect-date" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400" placeholder="e.g. Coffee chat at campus cafe">
+       </div>
+       <div class="grid md:grid-cols-2 gap-4">
+        <div><label for="signup-green-flag" class="block text-sm font-bold mb-2 text-gray-700">My Green Flag 💚</label> <input type="text" id="signup-green-flag" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400" placeholder="e.g. Great listener">
+        </div>
+        <div><label for="signup-red-flag" class="block text-sm font-bold mb-2 text-gray-700">My Red Flag 🚩</label> <input type="text" id="signup-red-flag" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400" placeholder="e.g. Always late">
+        </div>
+       </div>
+       <div><label for="signup-emoji" class="block text-sm font-bold mb-2 text-gray-700">Choose Your Profile Emoji *</label> <select id="signup-emoji" required class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400 text-2xl"> <option value="">Select emoji...</option> <option value="😊">😊</option> <option value="😎">😎</option> <option value="🤓">🤓</option> <option value="��">😄</option> <option value="🥰">🥰</option> <option value="😌">😌</option> <option value="🤗">🤗</option> <option value="😇">😇</option> </select>
+       </div><button type="submit" id="signup-submit-btn" class="w-full py-4 rounded-xl font-bold text-xl text-white shadow-lg hover:shadow-xl transition-all"> Create My Profile ✨ </button>
+       <p class="text-center text-sm text-gray-500">By signing up, you agree to our community guidelines and privacy policy.</p>
+      </form>
+     </div>
+    </div>
+   </div><!-- Login Page -->
+   <div id="page-login" class="hidden">
+    <div class="w-full min-h-full bg-gradient-to-br from-purple-50 to-pink-50 py-20 px-6 flex items-center justify-center">
+     <div class="max-w-md w-full">
+      <div class="text-center mb-8"><button onclick="showPage('landing')" class="text-gray-600 hover:text-gray-800 mb-4">← Back to Home</button>
+       <h1 class="text-5xl font-black mb-3 text-gray-800">Welcome Back! 💕</h1>
+       <p class="text-xl text-gray-600">Log in to find your matches</p>
+      </div>
+      <div class="bg-white rounded-3xl shadow-2xl p-8">
+       <form id="login-form" class="space-y-6">
+        <div><label for="login-name" class="block text-sm font-bold mb-2 text-gray-700">Your Name</label> <input type="text" id="login-name" required class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400" placeholder="Enter your name">
+        </div><button type="submit" id="login-submit-btn" class="w-full py-4 rounded-xl font-bold text-xl text-white shadow-lg hover:shadow-xl transition-all"> Login &amp; Find Matches 💖 </button>
+       </form>
+       <div class="mt-6 text-center">
+        <p class="text-gray-600">Don't have an account? <button onclick="showPage('signup')" class="text-purple-600 font-semibold hover:underline">Sign up here</button></p>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div><!-- Dashboard Page -->
+   <div id="page-dashboard" class="hidden">
+    <div class="w-full min-h-full bg-gradient-to-br from-purple-50 to-pink-50"><!-- Dashboard Nav -->
+     <nav class="w-full px-6 py-5 bg-white shadow-sm">
+      <div class="max-w-7xl mx-auto flex justify-between items-center">
+       <div class="flex items-center gap-2"><span class="text-3xl pulse-heart">💕</span> <span class="font-bold text-2xl bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">UTSTinder</span>
+       </div>
+       <div class="flex gap-4 items-center"><span id="user-welcome" class="font-semibold text-gray-700"></span> <button onclick="logout()" class="px-6 py-2 rounded-full font-semibold text-gray-600 hover:bg-gray-100 transition-all">Logout</button>
+       </div>
+      </div>
+     </nav>
+     <div class="max-w-7xl mx-auto py-12 px-6">
+      <div class="text-center mb-12">
+       <h1 class="text-5xl font-black mb-4 text-gray-800">Your Matches 💖</h1>
+       <p class="text-xl text-gray-600">Discover compatible students at UTS</p>
+      </div><!-- Matches Grid -->
+      <div id="matches-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8"><!-- Matches will be rendered here -->
+      </div>
+      <div id="no-matches-message" class="hidden text-center py-20">
+       <div class="text-8xl mb-6">
+        💔
+       </div>
+       <h3 class="text-3xl font-bold mb-4 text-gray-800">No Matches Yet</h3>
+       <p class="text-xl text-gray-600 mb-8">Be the first to create a profile and find your match!</p><button onclick="showPage('signup')" class="px-8 py-4 rounded-full font-bold text-lg text-white shadow-lg">Create Profile</button>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+    // Configuration
+    const defaultConfig = {
+      background_color: "#667eea",
+      surface_color: "#ffffff",
+      text_color: "#1f2937",
+      primary_action_color: "#f472b6",
+      secondary_action_color: "#8b5cf6",
+      font_family: "Poppins",
+      font_size: 16,
+      app_title: "UTSTinder! <3",
+      app_tagline: "Find Your Mate in UTS",
+      hero_subtitle: "More than a swipe. Match minds, match hearts, and build meaningful connections on campus.",
+      cta_button: "Start Matching ✨",
+      login_button: "Login",
+      signup_button: "Create Profile"
+    };
+
+    // State
+    let currentUser = null;
+    let allProfiles = [];
+    let isLoading = false;
+
+    // Data SDK Handler
+    const dataHandler = {
+      onDataChanged(data) {
+        allProfiles = data || [];
+        renderMatches();
+      }
+    };
+
+    // Initialize SDKs
+    async function initializeApp() {
+      const result = await window.dataSdk.init(dataHandler);
+      if (!result.isOk) {
+        console.error("Failed to initialize data SDK");
+      }
+    }
+
+    // Page Navigation
+    function showPage(pageName) {
+      const pages = ['landing', 'signup', 'login', 'dashboard'];
+      pages.forEach(page => {
+        const element = document.getElementById(`page-${page}`);
+        if (element) {
+          element.classList.add('hidden');
+        }
+      });
+      
+      const targetPage = document.getElementById(`page-${pageName}`);
+      if (targetPage) {
+        targetPage.classList.remove('hidden');
+        targetPage.classList.add('fade-in');
+      }
+
+      if (pageName === 'dashboard') {
+        renderMatches();
+      }
+    }
+
+    // Toast Notification
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    // Calculate Compatibility
+    function calculateCompatibility(profile1, profile2) {
+      let score = 0;
+      let reasons = [];
+
+      // Same personality type bonus
+      if (profile1.personality === profile2.personality) {
+        score += 25;
+        reasons.push(`Both ${profile1.personality.toLowerCase()}s`);
+      } else if ((profile1.personality === 'Ambivert' || profile2.personality === 'Ambivert')) {
+        score += 15;
+        reasons.push('Balanced personality mix');
+      }
+
+      // Love language compatibility
+      if (profile1.loveLanguage === profile2.loveLanguage) {
+        score += 20;
+        reasons.push('Same love language');
+      }
+
+      // Relationship goal alignment
+      if (profile1.relationshipGoal === profile2.relationshipGoal || 
+          profile1.relationshipGoal === 'Open' || profile2.relationshipGoal === 'Open') {
+        score += 20;
+        reasons.push('Compatible relationship goals');
+      }
+
+      // Shared interests
+      const interests1 = profile1.interests.toLowerCase().split(',').map(i => i.trim());
+      const interests2 = profile2.interests.toLowerCase().split(',').map(i => i.trim());
+      const sharedInterests = interests1.filter(i => interests2.includes(i));
+      if (sharedInterests.length > 0) {
+        score += Math.min(sharedInterests.length * 10, 25);
+        reasons.push(`Share ${sharedInterests.length} interest${sharedInterests.length > 1 ? 's' : ''}`);
+      }
+
+      // Course similarity
+      if (profile1.course.toLowerCase().includes(profile2.course.toLowerCase()) || 
+          profile2.course.toLowerCase().includes(profile1.course.toLowerCase())) {
+        score += 10;
+        reasons.push('Similar academic field');
+      }
+
+      return {
+        score: Math.min(score, 99),
+        reasons: reasons.slice(0, 3)
+      };
+    }
+
+    // Render Matches
+    function renderMatches() {
+      const container = document.getElementById('matches-container');
+      const noMatchesMsg = document.getElementById('no-matches-message');
+      
+      if (!container) return;
+
+      if (allProfiles.length === 0) {
+        container.innerHTML = '';
+        if (noMatchesMsg) noMatchesMsg.classList.remove('hidden');
+        return;
+      }
+
+      if (noMatchesMsg) noMatchesMsg.classList.add('hidden');
+
+      // Filter out current user if logged in
+      const profiles = currentUser 
+        ? allProfiles.filter(p => p.__backendId !== currentUser.__backendId)
+        : allProfiles;
+
+      container.innerHTML = profiles.map(profile => {
+        const compatibility = currentUser 
+          ? calculateCompatibility(currentUser, profile)
+          : { score: Math.floor(Math.random() * 30) + 60, reasons: ['Create profile to see real compatibility'] };
+
+        return `
+          <div class="profile-card p-6 match-animation">
+            <div class="text-center mb-4">
+              <div class="text-7xl mb-3">${profile.emoji}</div>
+              <h3 class="text-2xl font-bold text-gray-800 mb-1">${profile.name}</h3>
+              <p class="text-gray-600">${profile.age} • ${profile.course}</p>
+              <p class="text-sm text-gray-500">Year ${profile.year}</p>
+            </div>
+
+            <!-- Compatibility Score -->
+            <div class="mb-4">
+              <div class="flex justify-between items-center mb-2">
+                <span class="font-bold text-gray-700">Compatibility</span>
+                <span class="text-2xl font-black bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">${compatibility.score}%</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div class="compatibility-bar" style="width: ${compatibility.score}%"></div>
+              </div>
+              <div class="mt-2 text-sm text-gray-600">
+                ${compatibility.reasons.map(r => `<div>• ${r}</div>`).join('')}
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <p class="text-gray-700 mb-3">${profile.bio}</p>
+              
+              <div class="flex flex-wrap gap-2 mb-3">
+                <span class="tag bg-purple-100 text-purple-700">${profile.personality}</span>
+                <span class="tag bg-pink-100 text-pink-700">${profile.loveLanguage}</span>
+              </div>
+
+              <div class="text-sm text-gray-600 space-y-1">
+                <div><strong>Looking for:</strong> ${profile.relationshipGoal}</div>
+                <div><strong>Interests:</strong> ${profile.interests}</div>
+              </div>
+            </div>
+
+            ${profile.perfectDate ? `
+              <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-3 mb-3">
+                <div class="text-xs font-bold text-gray-600 mb-1">💭 PERFECT DATE</div>
+                <div class="text-sm text-gray-700">${profile.perfectDate}</div>
+              </div>
+            ` : ''}
+
+            ${profile.greenFlag || profile.redFlag ? `
+              <div class="grid grid-cols-2 gap-2 mb-4">
+                ${profile.greenFlag ? `
+                  <div class="bg-green-50 rounded-lg p-2">
+                    <div class="text-xs font-bold text-green-700 mb-1">💚 GREEN FLAG</div>
+                    <div class="text-xs text-gray-700">${profile.greenFlag}</div>
+                  </div>
+                ` : ''}
+                ${profile.redFlag ? `
+                  <div class="bg-red-50 rounded-lg p-2">
+                    <div class="text-xs font-bold text-red-700 mb-1">🚩 RED FLAG</div>
+                    <div class="text-xs text-gray-700">${profile.redFlag}</div>
+                  </div>
+                ` : ''}
+              </div>
+            ` : ''}
+
+            <button onclick="likeProfile('${profile.__backendId}')" class="w-full py-3 rounded-xl font-bold text-white shadow-lg hover:shadow-xl transition-all">
+              Like ${profile.name} 💖
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Like Profile
+    function likeProfile(profileId) {
+      const profile = allProfiles.find(p => p.__backendId === profileId);
+      if (profile) {
+        showToast(`You liked ${profile.name}! 💕 Match notifications coming soon!`, 'success');
+      }
+    }
+
+    // Sign Up Form Submit
+    document.getElementById('signup-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (isLoading) return;
+      
+      if (allProfiles.length >= 999) {
+        showToast('Maximum limit of 999 profiles reached. Please try again later.', 'error');
+        return;
+      }
+
+      const submitBtn = document.getElementById('signup-submit-btn');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<div class="spinner mx-auto"></div>';
+      isLoading = true;
+
+      const profile = {
+        name: document.getElementById('signup-name').value.trim(),
+        age: parseInt(document.getElementById('signup-age').value),
+        year: parseInt(document.getElementById('signup-year').value),
+        course: document.getElementById('signup-course').value.trim(),
+        bio: document.getElementById('signup-bio').value.trim(),
+        personality: document.getElementById('signup-personality').value,
+        loveLanguage: document.getElementById('signup-love-language').value,
+        interests: document.getElementById('signup-interests').value.trim(),
+        relationshipGoal: document.getElementById('signup-goal').value,
+        perfectDate: document.getElementById('signup-perfect-date').value.trim(),
+        greenFlag: document.getElementById('signup-green-flag').value.trim(),
+        redFlag: document.getElementById('signup-red-flag').value.trim(),
+        emoji: document.getElementById('signup-emoji').value,
+        verified: true,
+        createdAt: new Date().toISOString()
+      };
+
+      const result = await window.dataSdk.create(profile);
+      
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+      isLoading = false;
+
+      if (result.isOk) {
+        showToast('Profile created successfully! 🎉', 'success');
+        document.getElementById('signup-form').reset();
+        
+        setTimeout(() => {
+          showPage('dashboard');
+        }, 1000);
+      } else {
+        showToast('Failed to create profile. Please try again.', 'error');
+      }
+    });
+
+    // Login Form Submit
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (isLoading) return;
+
+      const submitBtn = document.getElementById('login-submit-btn');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<div class="spinner mx-auto"></div>';
+      isLoading = true;
+
+      const name = document.getElementById('login-name').value.trim();
+      
+      setTimeout(() => {
+        const foundUser = allProfiles.find(p => p.name.toLowerCase() === name.toLowerCase());
+        
+        if (foundUser) {
+          currentUser = foundUser;
+          document.getElementById('user-welcome').textContent = `Hey ${foundUser.name}! ${foundUser.emoji}`;
+          showToast(`Welcome back, ${foundUser.name}! 💕`, 'success');
+          showPage('dashboard');
+        } else {
+          showToast('Profile not found. Please sign up first!', 'error');
+        }
+
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        isLoading = false;
+      }, 800);
+    });
+
+    // Logout
+    function logout() {
+      currentUser = null;
+      document.getElementById('login-form').reset();
+      showToast('Logged out successfully', 'success');
+      showPage('landing');
+    }
+
+    // Config Change Handler
+    async function onConfigChange(config) {
+      const baseSize = config.font_size || defaultConfig.font_size;
+      const customFont = config.font_family || defaultConfig.font_family;
+      const baseFontStack = 'system-ui, -apple-system, sans-serif';
+      const fontFamily = `${customFont}, ${baseFontStack}`;
+
+      // Apply colors
+      document.querySelectorAll('.gradient-primary').forEach(el => {
+        el.style.background = `linear-gradient(135deg, ${config.background_color || defaultConfig.background_color} 0%, #764ba2 50%, #f093fb 100%)`;
+      });
+
+      document.body.style.color = config.text_color || defaultConfig.text_color;
+
+      document.querySelectorAll('nav, .bg-white, .profile-card').forEach(el => {
+        el.style.backgroundColor = config.surface_color || defaultConfig.surface_color;
+      });
+
+      const primaryButtons = document.querySelectorAll('#hero-cta, #nav-signup, #signup-submit-btn, #login-submit-btn, .profile-card button');
+      primaryButtons.forEach(btn => {
+        btn.style.backgroundColor = config.primary_action_color || defaultConfig.primary_action_color;
+        btn.style.color = config.surface_color || defaultConfig.surface_color;
+      });
+
+      const secondaryElements = document.querySelectorAll('.tag');
+      secondaryElements.forEach(el => {
+        el.style.backgroundColor = config.secondary_action_color || defaultConfig.secondary_action_color;
+        el.style.color = config.surface_color || defaultConfig.surface_color;
+      });
+
+      // Apply fonts
+      document.body.style.fontFamily = fontFamily;
+      document.querySelectorAll('h1, h2, h3, h4, button, input, select, textarea').forEach(el => {
+        el.style.fontFamily = fontFamily;
+      });
+
+      // Apply font sizes
+      document.body.style.fontSize = `${baseSize}px`;
+      document.querySelectorAll('h1').forEach(el => el.style.fontSize = `${baseSize * 4.375}px`);
+      document.querySelectorAll('h2').forEach(el => el.style.fontSize = `${baseSize * 3.125}px`);
+      document.querySelectorAll('h3').forEach(el => el.style.fontSize = `${baseSize * 1.5}px`);
+
+      // Apply text content
+      const titleElements = document.querySelectorAll('#nav-title, #hero-title');
+      titleElements.forEach(el => {
+        const title = config.app_title || defaultConfig.app_title;
+        el.innerHTML = title.replace('<3', '<span class="pulse-heart">💖</span>');
+      });
+
+      document.getElementById('hero-tagline').textContent = config.app_tagline || defaultConfig.app_tagline;
+      document.getElementById('hero-subtitle').textContent = config.hero_subtitle || defaultConfig.hero_subtitle;
+      document.getElementById('hero-cta').textContent = config.cta_button || defaultConfig.cta_button;
+      document.getElementById('nav-login').textContent = config.login_button || defaultConfig.login_button;
+      
+      const signupButtons = document.querySelectorAll('#nav-signup');
+      signupButtons.forEach(btn => btn.textContent = config.signup_button || defaultConfig.signup_button);
+    }
+
+    // Initialize Element SDK
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.background_color || defaultConfig.background_color,
+              set: (value) => {
+                config.background_color = value;
+                window.elementSdk.setConfig({ background_color: value });
+              }
+            },
+            {
+              get: () => config.surface_color || defaultConfig.surface_color,
+              set: (value) => {
+                config.surface_color = value;
+                window.elementSdk.setConfig({ surface_color: value });
+              }
+            },
+            {
+              get: () => config.text_color || defaultConfig.text_color,
+              set: (value) => {
+                config.text_color = value;
+                window.elementSdk.setConfig({ text_color: value });
+              }
+            },
+            {
+              get: () => config.primary_action_color || defaultConfig.primary_action_color,
+              set: (value) => {
+                config.primary_action_color = value;
+                window.elementSdk.setConfig({ primary_action_color: value });
+              }
+            },
+            {
+              get: () => config.secondary_action_color || defaultConfig.secondary_action_color,
+              set: (value) => {
+                config.secondary_action_color = value;
+                window.elementSdk.setConfig({ secondary_action_color: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => config.font_family || defaultConfig.font_family,
+            set: (value) => {
+              config.font_family = value;
+              window.elementSdk.setConfig({ font_family: value });
+            }
+          },
+          fontSizeable: {
+            get: () => config.font_size || defaultConfig.font_size,
+            set: (value) => {
+              config.font_size = value;
+              window.elementSdk.setConfig({ font_size: value });
+            }
+          }
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ["app_title", config.app_title || defaultConfig.app_title],
+          ["app_tagline", config.app_tagline || defaultConfig.app_tagline],
+          ["hero_subtitle", config.hero_subtitle || defaultConfig.hero_subtitle],
+          ["cta_button", config.cta_button || defaultConfig.cta_button],
+          ["login_button", config.login_button || defaultConfig.login_button],
+          ["signup_button", config.signup_button || defaultConfig.signup_button]
+        ])
+      });
+
+      onConfigChange(window.elementSdk.config);
+    } else {
+      onConfigChange(defaultConfig);
+    }
+
+    // Sample profiles to create on first load
+    const sampleProfiles = [
+      {
+        name: "Emma",
+        age: 20,
+        year: 2,
+        course: "Business Administration",
+        bio: "Aspiring entrepreneur with a passion for sustainable fashion. Love meaningful conversations over coffee and exploring new cafes around campus!",
+        personality: "Ambivert",
+        loveLanguage: "Quality Time",
+        interests: "Coffee, Fashion, Sustainability, Yoga, Reading",
+        relationshipGoal: "Dating",
+        perfectDate: "Sunset picnic at the park followed by stargazing",
+        greenFlag: "Always remembers the little things",
+        redFlag: "Obsessed with organizing everything",
+        emoji: "🥰",
+        verified: true,
+        createdAt: new Date().toISOString()
+      },
+      {
+        name: "Sophie",
+        age: 21,
+        year: 3,
+        course: "Computer Science",
+        bio: "Tech enthusiast by day, gamer by night. Looking for someone who appreciates both deep coding sessions and spontaneous adventures. Let's debug life together!",
+        personality: "Introvert",
+        loveLanguage: "Acts of Service",
+        interests: "Gaming, Coding, Anime, Bubble Tea, Hiking",
+        relationshipGoal: "Serious",
+        perfectDate: "Cozy gaming session with takeout and good vibes",
+        greenFlag: "Super thoughtful and always plans ahead",
+        redFlag: "Can get too competitive in board games",
+        emoji: "🤓",
+        verified: true,
+        createdAt: new Date().toISOString()
+      },
+      {
+        name: "Mia",
+        age: 19,
+        year: 1,
+        course: "Creative Arts",
+        bio: "Artist soul with a love for music, painting, and all things creative. Seeking someone who sees beauty in the everyday moments and isn't afraid to be vulnerable.",
+        personality: "Extrovert",
+        loveLanguage: "Words of Affirmation",
+        interests: "Art, Music Festivals, Photography, Thrifting, Poetry",
+        relationshipGoal: "Open",
+        perfectDate: "Art gallery hopping then late night food market adventure",
+        greenFlag: "Incredibly creative and expressive",
+        redFlag: "Always running fashionably late",
+        emoji: "😌",
+        verified: true,
+        createdAt: new Date().toISOString()
+      },
+      {
+        name: "Olivia",
+        age: 22,
+        year: 4,
+        course: "Psychology",
+        bio: "Psychology major who loves understanding what makes people tick. Empathetic listener, avid reader, and terrible dancer. Looking for genuine connection and growth together.",
+        personality: "Ambivert",
+        loveLanguage: "Physical Touch",
+        interests: "Psychology, Books, Meditation, Cooking, True Crime Podcasts",
+        relationshipGoal: "Serious",
+        perfectDate: "Bookstore browsing followed by cooking dinner together",
+        greenFlag: "Great emotional intelligence and communication",
+        redFlag: "Overanalyzes everything (occupational hazard!)",
+        emoji: "😊",
+        verified: true,
+        createdAt: new Date().toISOString()
+      },
+      {
+        name: "Ava",
+        age: 20,
+        year: 2,
+        course: "Environmental Science",
+        bio: "Planet lover on a mission to make a difference. Passionate about climate action, outdoor adventures, and living sustainably. Bonus points if you compost!",
+        personality: "Extrovert",
+        loveLanguage: "Quality Time",
+        interests: "Hiking, Environmental Activism, Camping, Gardening, Travel",
+        relationshipGoal: "Dating",
+        perfectDate: "Beach cleanup date then fish and chips by the ocean",
+        greenFlag: "Passionate and driven with strong values",
+        redFlag: "Gets on soapbox about plastic straws",
+        emoji: "😄",
+        verified: true,
+        createdAt: new Date().toISOString()
+      },
+      {
+        name: "Zara",
+        age: 21,
+        year: 3,
+        course: "Engineering",
+        bio: "Engineering student who loves solving problems and building things. Gym enthusiast, coffee addict, and firm believer that pineapple belongs on pizza. Fight me.",
+        personality: "Ambivert",
+        loveLanguage: "Acts of Service",
+        interests: "Gym, Coffee, DIY Projects, Podcasts, Food Adventures",
+        relationshipGoal: "Open",
+        perfectDate: "Morning gym session then brunch at that new place everyone's talking about",
+        greenFlag: "Super reliable and always keeps promises",
+        redFlag: "Will absolutely steal food off your plate",
+        emoji: "😎",
+        verified: true,
+        createdAt: new Date().toISOString()
+      },
+      {
+        name: "Lily",
+        age: 19,
+        year: 1,
+        course: "Marketing",
+        bio: "Social butterfly with big dreams and even bigger ambitions. Love networking, creating content, and making people smile. Looking for someone to share adventures and build an empire with!",
+        personality: "Extrovert",
+        loveLanguage: "Receiving Gifts",
+        interests: "Social Media, Networking Events, Brunch, Shopping, Travel",
+        relationshipGoal: "Dating",
+        perfectDate: "Rooftop bar drinks with a view of the city skyline",
+        greenFlag: "Super energetic and brings out the best in people",
+        redFlag: "Always on phone creating content",
+        emoji: "🤗",
+        verified: true,
+        createdAt: new Date().toISOString()
+      },
+      {
+        name: "Grace",
+        age: 22,
+        year: 4,
+        course: "Medicine",
+        bio: "Future doctor with a heart for helping others. Study-focused but always make time for what matters. Love deep conversations, good food, and someone who understands the med school grind.",
+        personality: "Introvert",
+        loveLanguage: "Quality Time",
+        interests: "Medicine, Study Dates, Health & Wellness, Netflix, Home Cooking",
+        relationshipGoal: "Serious",
+        perfectDate: "Quiet dinner at home with good wine and better conversation",
+        greenFlag: "Incredibly caring and dedicated",
+        redFlag: "Workaholic tendencies - med school life!",
+        emoji: "😇",
+        verified: true,
+        createdAt: new Date().toISOString()
+      }
+    ];
+
+    // Create sample profiles if database is empty
+    async function createSampleProfiles() {
+      if (allProfiles.length === 0) {
+        for (const profile of sampleProfiles) {
+          await window.dataSdk.create(profile);
+          // Small delay to avoid overwhelming the system
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+    }
+
+    // Initialize app
+    initializeApp().then(() => {
+      // Wait a bit for initial data load, then create samples if needed
+      setTimeout(() => {
+        createSampleProfiles();
+      }, 1000);
+    });
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9bdd95c61037b91f',t:'MTc2ODM5ODQ0NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
